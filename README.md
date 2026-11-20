@@ -46,7 +46,8 @@ Adresse : `/borne`. Sur l'iPad, l'ouvrir dans Safari puis « Ajouter à l'écran
 | Club Olaía, mode express, back-office | | à venir |
 
 - La carte (plats, catégories, options, prix, photos) est lue dans Zelty et gardée une minute : un plat désactivé dans Zelty disparaît de l'iPad en une à deux minutes.
-- Sans `ZELTY_API_KEY`, ou si Zelty ne répond pas, la borne affiche l'état réel au lieu d'une carte.
+- Sans `ZELTY_API_KEY`, la borne affiche une **carte d'exemple** (`src/lib/carte-exemple.ts`, produits et prix imaginés), signalée comme telle sur l'écran. Dès que la clé est ajoutée, la carte Zelty la remplace.
+- Si Zelty ne répond pas ou renvoie une carte vide, la borne l'affiche au lieu d'une carte.
 - Après 75 s sans contact, la borne demande « Tu es toujours là ? », puis vide le panier et revient à l'accueil.
 - Les allergènes ne viennent pas de Zelty : la fiche renvoie vers l'équipe tant que le back-office ne les gère pas.
 
