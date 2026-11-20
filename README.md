@@ -1,1 +1,43 @@
-# olaia-commande
+# Olaía · logiciel de commande
+
+Borne de commande sur iPad et back-office pour le coffee shop **Olaía Club** (Lyon), reliés à la caisse **Zelty**. Prévu pour plusieurs sites.
+
+- Maquette validée (16 écrans) : https://claude.ai/artifact/SpqD9EPdCCD1L5WLVQ7QWe
+- Document de cadrage : https://claude.ai/artifact/REPvegoWTKsbmmHDQ62uQw
+
+## Principes
+
+- **Zelty est la caisse et la source unique** : carte, photos, prix, options et ruptures viennent de Zelty. La borne lit les ruptures, elle ne les écrit pas.
+- **L'écran cuisine est celui de Zelty** (KDS sur un deuxième iPad) : les commandes et leurs personnalisations partent dans Zelty.
+- **Club Olaía avec FIMIO** : 1 € = 1 point, crédités après paiement. Trois statuts (Sable, Écume, Golden hour) qui correspondent à Bronze, Argent et Or dans FIMIO.
+- **Pas de paiement bancaire maison** : on pilote le terminal existant.
+- **Ne jamais simuler une intégration** : tant qu'un endpoint Zelty ou FIMIO n'est pas confirmé, l'écran le dit au lieu d'inventer des données.
+
+## Pile
+
+- Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4
+- Supabase (PostgreSQL, auth du back-office)
+- Hébergement Vercel
+
+## Démarrer
+
+```bash
+npm install
+cp .env.example .env.local   # puis remplir les valeurs
+npm run dev
+```
+
+Ouvre http://localhost:3000.
+
+## Charte
+
+Les couleurs et polices sont dans `src/app/globals.css` : crème `#F4EEE7`, papier `#FBF8F4`, sable `#E5D9CB`, marron `#541F09`. Newsreader pour les titres, DM Sans pour l'interface. Logos dans `public/brand/`.
+
+## Organisation prévue
+
+```
+src/app/            écrans (borne, back-office)
+src/lib/supabase/   clients Supabase (navigateur, serveur, admin)
+src/lib/zelty/      lecture de la carte et envoi des commandes (à venir)
+src/lib/fimio/      Club Olaía (à venir)
+```
