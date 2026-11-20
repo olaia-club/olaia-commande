@@ -27,3 +27,31 @@
   outline: 2px solid var(--color-marron);
   outline-offset: 3px;
 }
+
+/* Borne iPad : pas de sélection de texte, pas de surbrillance au toucher, pas de rebond. */
+.borne {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+/* Accueil : la photo avance lentement, comme une vidéo. */
+@keyframes borne-derive {
+  from {
+    transform: scale(1.04) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.14) translate3d(-2%, -1%, 0);
+  }
+}
+.borne-derive {
+  animation: borne-derive 18s ease-in-out infinite alternate;
+}
+@media (prefers-reduced-motion: reduce) {
+  .borne-derive {
+    animation: none;
+  }
+}

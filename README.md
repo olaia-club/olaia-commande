@@ -33,11 +33,28 @@ Ouvre http://localhost:3000.
 
 Les couleurs et polices sont dans `src/app/globals.css` : crème `#F4EEE7`, papier `#FBF8F4`, sable `#E5D9CB`, marron `#541F09`. Newsreader pour les titres, DM Sans pour l'interface. Logos dans `public/brand/`.
 
-## Organisation prévue
+## La borne iPad
+
+Adresse : `/borne`. Sur l'iPad, l'ouvrir dans Safari puis « Ajouter à l'écran d'accueil » pour le plein écran.
+
+| Écran | Adresse | État |
+| --- | --- | --- |
+| Accueil (vidéo ou photo surf) | `/borne` | fait |
+| Carte, fiche produit, commande en cours | `/borne/carte` | fait, lit Zelty |
+| Panier, sur place ou à emporter | `/borne/panier` | fait |
+| Envoi à la caisse Zelty et paiement au terminal | | à brancher |
+| Club Olaía, mode express, back-office | | à venir |
+
+- La carte (plats, catégories, options, prix, photos) est lue dans Zelty et gardée une minute : un plat désactivé dans Zelty disparaît de l'iPad en une à deux minutes.
+- Sans `ZELTY_API_KEY`, ou si Zelty ne répond pas, la borne affiche l'état réel au lieu d'une carte.
+- Après 75 s sans contact, la borne demande « Tu es toujours là ? », puis vide le panier et revient à l'accueil.
+- Les allergènes ne viennent pas de Zelty : la fiche renvoie vers l'équipe tant que le back-office ne les gère pas.
+
+## Organisation
 
 ```
-src/app/            écrans (borne, back-office)
-src/lib/supabase/   clients Supabase (navigateur, serveur, admin)
-src/lib/zelty/      lecture de la carte et envoi des commandes (à venir)
-src/lib/fimio/      Club Olaía (à venir)
+src/app/borne/        écrans de la borne iPad
+src/components/borne/ panier, fiche produit, carte, inactivité
+src/lib/zelty/        lecture de la carte Zelty (envoi des commandes à venir)
+src/lib/supabase/     clients Supabase (navigateur, serveur, admin)
 ```
