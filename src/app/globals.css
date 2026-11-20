@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+/*
+ * Charte Olaía v5 (nov. 2026), version validée sur la maquette :
+ * fond crème plutôt que blanc, cartes papier, panneaux sable, texte marron.
+ * Le blanc pur ne sert qu'en inverse (sur marron ou sur photo).
+ */
+@theme {
+  --color-creme: #f4eee7;
+  --color-papier: #fbf8f4;
+  --color-sable: #e5d9cb;
+  --color-marron: #541f09;
+  --color-marron-fonce: #3f1707;
+  --color-marron-doux: #7a5444;
+  --color-trait: rgb(84 31 9 / 0.16);
+
+  /* Statuts du Club (cartes façon Wallet) */
+  --color-statut-sable: #cfaa80;
+  --color-statut-ecume: #c9cdd2;
+  --color-statut-golden: #d5ae52;
+
+  --font-sans: var(--font-dm-sans), system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), Georgia, serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-marron);
+  outline-offset: 3px;
+}
