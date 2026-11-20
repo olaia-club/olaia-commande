@@ -2,6 +2,8 @@ import "server-only";
 
 import { cacheLife } from "next/cache";
 
+import { CARTE_EXEMPLE } from "@/lib/carte-exemple";
+
 import { assemblerCatalogue, type Catalogue } from "./lecture";
 
 /**
@@ -15,7 +17,8 @@ const ZELTY_BASE = process.env.ZELTY_API_BASE || "https://api.zelty.fr/2.5";
 
 export type EtatCarte =
   | { etat: "ok"; catalogue: Catalogue }
-  | { etat: "non-configure" }
+  /** Pas de clé Zelty : carte d'exemple, affichée comme telle sur la borne. */
+  | { etat: "exemple"; catalogue: Catalogue }
   | { etat: "vide" }
   | { etat: "erreur"; message: string };
 
@@ -54,10 +57,13 @@ async function chargerCatalogue(cle: string, restaurant: string | null): Promise
   return assemblerCatalogue(plats, tags, options);
 }
 
-/** État réel de la carte : jamais de produits inventés quand Zelty n'est pas branché. */
+/**
+ * La carte de la borne : celle de Zelty dès que la clé est là. Sans clé, la
+ * carte d'exemple (demandée pour tester), signalée comme telle à l'écran.
+ */
 export async function lireCarte(): Promise<EtatCarte> {
   const cle = process.env.ZELTY_API_KEY;
-  if (!cle) return { etat: "non-configure" };
+  if (!cle) return { etat: "exemple", catalogue: CARTE_EXEMPLE };
   try {
     const catalogue = await chargerCatalogue(cle, process.env.ZELTY_RESTAURANT_ID || null);
     return catalogue.plats.length ? { etat: "ok", catalogue } : { etat: "vide" };

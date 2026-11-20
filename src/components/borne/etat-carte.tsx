@@ -2,11 +2,9 @@ import Link from "next/link";
 
 import type { EtatCarte } from "@/lib/zelty/carte";
 
-const TEXTES: Record<Exclude<EtatCarte["etat"], "ok">, { titre: string; corps: string }> = {
-  "non-configure": {
-    titre: "La carte n'est pas encore reliée à Zelty",
-    corps: "Elle s'affichera ici dès que la clé API Zelty d'Olaía sera ajoutée. Aucun produit n'est inventé en attendant.",
-  },
+type Indisponible = Exclude<EtatCarte, { etat: "ok" } | { etat: "exemple" }>;
+
+const TEXTES: Record<Indisponible["etat"], { titre: string; corps: string }> = {
   vide: {
     titre: "Zelty ne renvoie aucun produit en vente",
     corps: "Vérifie dans Zelty que les produits sont actifs et ont un prix, et que l'identifiant du restaurant est le bon.",
@@ -18,13 +16,13 @@ const TEXTES: Record<Exclude<EtatCarte["etat"], "ok">, { titre: string; corps: s
 };
 
 /** Ce que voit la borne quand la carte Zelty n'est pas disponible : l'état réel, sans données inventées. */
-export function EtatCarteIndisponible({ etat }: { etat: Exclude<EtatCarte, { etat: "ok" }> }) {
+export function EtatCarteIndisponible({ etat }: { etat: Indisponible }) {
   const t = TEXTES[etat.etat];
   return (
     <div className="flex flex-1 items-center justify-center p-10">
       <div className="flex max-w-[620px] flex-col items-center gap-5 rounded-[32px] bg-papier p-12 text-center">
         <p className="rounded-full bg-sable px-4 py-1.5 text-sm font-semibold">
-          {etat.etat === "non-configure" ? "Zelty : non configuré" : etat.etat === "vide" ? "Zelty : carte vide" : "Zelty : indisponible"}
+          {etat.etat === "vide" ? "Zelty : carte vide" : "Zelty : indisponible"}
         </p>
         <h1 className="font-serif text-5xl leading-tight">{t.titre}</h1>
         <p className="text-xl leading-relaxed text-marron-doux">{t.corps}</p>

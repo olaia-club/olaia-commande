@@ -11,7 +11,7 @@ import { prixUnitaire, usePanier } from "./panier-context";
 import { PhotoPlat } from "./photo-plat";
 
 /** La carte de la borne : catégories, plats et commande en cours. */
-export function CarteBorne({ catalogue }: { catalogue: Catalogue }) {
+export function CarteBorne({ catalogue, exemple = false }: { catalogue: Catalogue; exemple?: boolean }) {
   const { categories, plats, options } = catalogue;
   const panier = usePanier();
   const [ouvert, setOuvert] = useState<{ plat: Plat; categorie: string } | null>(null);
@@ -55,6 +55,11 @@ export function CarteBorne({ catalogue }: { catalogue: Catalogue }) {
       {/* Catégories */}
       <nav className="flex w-[220px] shrink-0 flex-col gap-1 overflow-y-auto border-r border-trait px-4 py-6" aria-label="Catégories">
         <p className="px-4 pb-3 text-sm font-semibold tracking-wide text-marron-doux">La carte</p>
+        {exemple && (
+          <p className="mx-2 mb-3 rounded-2xl bg-sable px-3 py-2 text-sm leading-snug font-semibold">
+            Carte d&apos;exemple : produits et prix pas encore lus dans Zelty.
+          </p>
+        )}
         {categories.map((c) => (
           <button
             key={c.id}
@@ -95,14 +100,17 @@ export function CarteBorne({ catalogue }: { catalogue: Catalogue }) {
                       <span className="mt-2 block font-serif text-2xl leading-tight">{p.nom}</span>
                       <span className="mt-0.5 block text-lg font-semibold">{prix(p.prix)}</span>
                     </button>
-                    <button
-                      type="button"
-                      aria-label={`Ajouter ${p.nom}`}
-                      onClick={() => ajouterDirect(p, c.nom)}
-                      className="absolute top-[calc(75%*0.75)] right-3 flex size-14 -translate-y-1/2 items-center justify-center rounded-full bg-marron text-3xl text-papier shadow-lg ring-4 ring-papier/70 active:scale-95"
-                    >
-                      +
-                    </button>
+                    {/* Calque à la taille de la photo : le « + » reste dans son coin, quel que soit le nom. */}
+                    <div className="pointer-events-none absolute inset-x-0 top-0 aspect-[4/3]">
+                      <button
+                        type="button"
+                        aria-label={`Ajouter ${p.nom}`}
+                        onClick={() => ajouterDirect(p, c.nom)}
+                        className="pointer-events-auto absolute right-3 bottom-3 flex size-14 items-center justify-center rounded-full bg-marron text-3xl text-papier shadow-lg ring-4 ring-papier/70 active:scale-95"
+                      >
+                        +
+                      </button>
+                    </div>
                   </li>
                 ))}
             </ul>

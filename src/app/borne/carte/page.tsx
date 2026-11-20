@@ -10,8 +10,8 @@ import { lireCarte } from "@/lib/zelty/carte";
 async function Carte() {
   await connection();
   const carte = await lireCarte();
-  if (carte.etat !== "ok") return <EtatCarteIndisponible etat={carte} />;
-  return <CarteBorne catalogue={carte.catalogue} />;
+  if (carte.etat === "ok" || carte.etat === "exemple") return <CarteBorne catalogue={carte.catalogue} exemple={carte.etat === "exemple"} />;
+  return <EtatCarteIndisponible etat={carte} />;
 }
 
 export default function PageCarte() {
