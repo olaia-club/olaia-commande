@@ -42,13 +42,17 @@ Adresse : `/borne`. Sur l'iPad, l'ouvrir dans Safari puis « Ajouter à l'écran
 | Accueil (vidéo ou photo surf) | `/borne` | fait |
 | Carte, fiche produit, commande en cours | `/borne/carte` | fait, lit Zelty |
 | Panier, sur place ou à emporter | `/borne/panier` | fait |
+| Club Olaía : retrouver sa carte, s'inscrire, voir ses points | `/borne/panier` | fait, lit FIMIO |
 | Envoi à la caisse Zelty et paiement au terminal | | à brancher |
-| Club Olaía, mode express, back-office | | à venir |
+| Points crédités après paiement, récompenses à la borne | | avec le paiement |
+| Mode express, back-office | | à venir |
 
 - La carte (plats, catégories, options, prix, photos) est lue dans Zelty et gardée une minute : un plat désactivé dans Zelty disparaît de l'iPad en une à deux minutes.
 - Sans `ZELTY_API_KEY`, la borne affiche une **carte d'exemple** (`src/lib/carte-exemple.ts`, produits et prix imaginés), signalée comme telle sur l'écran. Dès que la clé est ajoutée, la carte Zelty la remplace.
 - Si Zelty ne répond pas ou renvoie une carte vide, la borne l'affiche au lieu d'une carte.
 - Après 75 s sans contact, la borne demande « Tu es toujours là ? », puis vide le panier et revient à l'accueil.
+- Le Club vit dans **FIMIO**, logiciel à part avec son propre compte Olaía : la borne ne garde ni carte ni point. Elle utilise l'API borne de FIMIO avec `FIMIO_BORNE_CLE` (générée dans FIMIO > Fidélité > Borne). Le client tape son portable, la borne retrouve sa carte ou la crée (prénom, accord SMS facultatif) et affiche son solde et sa prochaine récompense. Seuls le prénom et le solde reviennent vers l'iPad. Sans clé, l'écran dit « pas encore relié à FIMIO ».
+- Les points de la commande seront envoyés à FIMIO après le paiement (`crediterCommande` dans `src/lib/fimio/club.ts`, prêt, appelé quand le terminal sera branché). FIMIO ignore un deuxième envoi de la même commande.
 - Les allergènes ne viennent pas de Zelty : la fiche renvoie vers l'équipe tant que le back-office ne les gère pas.
 
 ## Organisation
