@@ -3,7 +3,7 @@ import Link from "next/link";
 
 const parts = [
   {
-    title: "La borne",
+    title: "L'appli iPad",
     body: "L'iPad du comptoir : vidéo d'accueil, carte lue dans Zelty, panier, paiement au terminal, Club Olaía et mode express.",
   },
   {
@@ -20,12 +20,12 @@ export default function Home() {
       <div className="flex flex-col gap-3">
         <h1 className="font-serif text-5xl leading-none">Logiciel de commande</h1>
         <p className="text-lg text-marron-doux">
-          La borne iPad est en cours : accueil, carte lue dans Zelty, fiche produit et panier. Le back-office arrive ensuite.
+          L&apos;appli de commande sur iPad est en cours : accueil, carte lue dans Zelty, fiche produit, panier et Club relié à FIMIO. Le back-office arrive ensuite.
         </p>
       </div>
 
       <Link href="/borne" className="self-start rounded-full bg-marron px-6 py-3 font-semibold text-papier">
-        Ouvrir la borne iPad
+        Ouvrir l&apos;appli iPad
       </Link>
 
       <ul className="grid gap-4 sm:grid-cols-2">

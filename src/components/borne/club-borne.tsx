@@ -2,16 +2,18 @@
 
 import { useState, useTransition } from "react";
 
-import { chercherMembre, inscrireMembre, type ReponseClub } from "@/app/borne/club-actions";
+import { chercherMembre, chercherParScan, envoyerCarte, inscrireMembre, type ReponseClub } from "@/app/borne/club-actions";
 import { telephoneLisible, type MembreClub, type RecompenseClub } from "@/lib/fimio/lecture";
 
+import { ScanCarte } from "./scan-carte";
 import { prixEuro } from "./format";
 import { usePanier } from "./panier-context";
 
 /**
- * Le Club Olaía dans le panier : le client tape son portable, la borne retrouve
- * sa carte dans FIMIO (ou la crée) et affiche ses points. Les points de la
- * commande sont crédités par FIMIO après le paiement.
+ * Le Club Olaía dans le panier : le client tape son portable ou montre le QR de
+ * sa carte Wallet, la borne retrouve sa carte dans FIMIO (ou la crée) et
+ * affiche ses points. Les points de la commande sont crédités par FIMIO après
+ * le paiement, et sa carte Wallet se met à jour toute seule.
  */
 
 const soldeLisible = (m: MembreClub) => (m.mode === "cagnotte" ? prixEuro(m.solde / 100) : `${m.solde} point${m.solde > 1 ? "s" : ""}`);
@@ -79,8 +81,9 @@ export function ClubBorne({ configure }: { configure: boolean }) {
 
 type Etape =
   | { nom: "numero"; message?: string }
+  | { nom: "scan"; message?: string }
   | { nom: "inscription"; message?: string }
-  | { nom: "membre"; membre: MembreClub; recompenses: RecompenseClub[]; nouveau: boolean }
+  | { nom: "membre"; membre: MembreClub; recompenses: RecompenseClub[]; nouveau: boolean; qrWallet: string | null; carteParSms: boolean }
   | { nom: "indisponible"; message: string };
 
 function FenetreClub({ fermer, valider }: { fermer: () => void; valider: (m: MembreClub) => void }) {
@@ -90,8 +93,8 @@ function FenetreClub({ fermer, valider }: { fermer: () => void; valider: (m: Mem
   const [etape, setEtape] = useState<Etape>({ nom: "numero" });
   const [enCours, demarrer] = useTransition();
 
-  const suite = (r: ReponseClub, depuis: "numero" | "inscription") => {
-    if (r.etat === "membre") setEtape({ nom: "membre", membre: r.membre, recompenses: r.recompenses, nouveau: r.nouveau });
+  const suite = (r: ReponseClub, depuis: "numero" | "scan" | "inscription") => {
+    if (r.etat === "membre") setEtape({ nom: "membre", ...r });
     else if (r.etat === "inconnu") setEtape({ nom: "inscription" });
     else if (r.etat === "invalide") setEtape({ nom: depuis, message: r.message });
     else setEtape({ nom: "indisponible", message: r.message });
@@ -110,13 +113,45 @@ function FenetreClub({ fermer, valider }: { fermer: () => void; valider: (m: Mem
           ×
         </button>
 
-        {etape.nom === "numero" && (
+        {(etape.nom === "numero" || etape.nom === "scan") && (
           <>
             <h2 id="club-titre" className="font-serif text-5xl leading-tight">
               Club Olaía
             </h2>
-            <p className="mt-2 text-lg text-marron-doux">Ton numéro de portable, pour retrouver ta carte ou en créer une.</p>
-            <p aria-live="polite" className="mt-6 flex h-16 w-full items-center justify-center rounded-2xl bg-creme font-serif text-4xl tracking-wide">
+            <div role="tablist" aria-label="Comment retrouver ta carte" className="mt-5 grid w-full grid-cols-2 rounded-full bg-creme p-1.5">
+              {(
+                [
+                  ["numero", "Mon numéro"],
+                  ["scan", "Ma carte Wallet"],
+                ] as const
+              ).map(([nom, libelle]) => (
+                <button
+                  key={nom}
+                  type="button"
+                  role="tab"
+                  aria-selected={etape.nom === nom}
+                  onClick={() => setEtape({ nom })}
+                  className="h-14 rounded-full text-lg font-semibold text-marron-doux aria-selected:bg-marron aria-selected:text-papier"
+                >
+                  {libelle}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {etape.nom === "scan" && (
+          <ScanCarte
+            message={etape.message}
+            enCours={enCours}
+            lu={(valeur) => demarrer(async () => suite(await chercherParScan(valeur), "scan"))}
+            sansCamera={() => setEtape({ nom: "numero" })}
+          />
+        )}
+
+        {etape.nom === "numero" && (
+          <>
+            <p aria-live="polite" className="mt-5 flex h-16 w-full items-center justify-center rounded-2xl bg-creme font-serif text-4xl tracking-wide">
               {chiffres ? telephoneLisible(chiffres) : <span className="text-marron-doux/60">06 __ __ __ __</span>}
             </p>
             <p role="alert" className="mt-2 h-6 text-base font-semibold text-marron">
@@ -214,7 +249,7 @@ function FenetreClub({ fermer, valider }: { fermer: () => void; valider: (m: Mem
 }
 
 function Pave({ chiffres, changer }: { chiffres: string; changer: (c: string) => void }) {
-  const touche = "flex h-[76px] items-center justify-center rounded-2xl bg-creme text-3xl font-semibold active:bg-sable disabled:opacity-35";
+  const touche = "flex h-[72px] items-center justify-center rounded-2xl bg-creme text-3xl font-semibold active:bg-sable disabled:opacity-35";
   return (
     <div className="mt-2 grid w-full grid-cols-3 gap-3">
       {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((c) => (
@@ -235,35 +270,83 @@ function Pave({ chiffres, changer }: { chiffres: string; changer: (c: string) =>
   );
 }
 
-function CarteMembre({ membre, recompenses, nouveau, valider }: { membre: MembreClub; recompenses: RecompenseClub[]; nouveau: boolean; valider: () => void }) {
+function CarteMembre({
+  membre,
+  recompenses,
+  nouveau,
+  qrWallet,
+  carteParSms,
+  valider,
+}: {
+  membre: MembreClub;
+  recompenses: RecompenseClub[];
+  nouveau: boolean;
+  qrWallet: string | null;
+  carteParSms: boolean;
+  valider: () => void;
+}) {
   const dispo = recompenses.filter((r) => r.cout <= membre.solde);
   const prochaine = recompenses.find((r) => r.cout > membre.solde);
   const titre = membre.prenom ? `${nouveau ? "Bienvenue" : "Bonjour"} ${membre.prenom}` : nouveau ? "Bienvenue au Club" : "Bonjour";
+  const [sms, setSms] = useState<{ etat: "pret" | "envoi" | "envoye" } | { etat: "erreur"; message: string }>({ etat: "pret" });
   return (
     <>
       <h2 id="club-titre" className="font-serif text-5xl leading-tight">
         {titre}
       </h2>
       <p className="mt-2 text-lg text-marron-doux">{nouveau ? "Ta carte du Club est créée." : "On a retrouvé ta carte du Club."}</p>
-      <div className="mt-7 w-full rounded-3xl bg-sable/70 px-8 py-6">
-        <p className="text-base font-semibold text-marron-doux">{membre.mode === "cagnotte" ? "Ta cagnotte" : "Tes points"}</p>
-        <p className="font-serif text-7xl leading-none">{membre.mode === "cagnotte" ? prixEuro(membre.solde / 100) : membre.solde}</p>
-        {prochaine && (
-          <>
-            <div className="mt-5 h-3 overflow-hidden rounded-full bg-papier" aria-hidden>
-              <div className="h-full rounded-full bg-marron" style={{ width: `${Math.min(100, (membre.solde / prochaine.cout) * 100)}%` }} />
-            </div>
-            <p className="mt-2 text-base">
-              Encore {prochaine.cout - membre.solde} points avant : <span className="font-semibold">{prochaine.nom}</span>
+      <div className="mt-7 flex w-full items-center gap-6 rounded-3xl bg-sable/70 px-8 py-6 text-left">
+        <div className="min-w-0 flex-1">
+          <p className="text-base font-semibold text-marron-doux">{membre.mode === "cagnotte" ? "Ta cagnotte" : "Tes points"}</p>
+          <p className="font-serif text-7xl leading-none">{membre.mode === "cagnotte" ? prixEuro(membre.solde / 100) : membre.solde}</p>
+          {prochaine && (
+            <>
+              <div className="mt-5 h-3 overflow-hidden rounded-full bg-papier" aria-hidden>
+                <div className="h-full rounded-full bg-marron" style={{ width: `${Math.min(100, (membre.solde / prochaine.cout) * 100)}%` }} />
+              </div>
+              <p className="mt-2 text-base">
+                Encore {prochaine.cout - membre.solde} points avant : <span className="font-semibold">{prochaine.nom}</span>
+              </p>
+            </>
+          )}
+          {dispo.length > 0 && (
+            <p className="mt-3 text-base">
+              Déjà à toi : <span className="font-semibold">{dispo.map((r) => r.nom).join(", ")}</span>
             </p>
-          </>
-        )}
-        {dispo.length > 0 && (
-          <p className="mt-3 text-base">
-            Déjà à toi : <span className="font-semibold">{dispo.map((r) => r.nom).join(", ")}</span>
-          </p>
+          )}
+        </div>
+        {qrWallet && (
+          <figure className="flex w-[150px] shrink-0 flex-col items-center gap-2">
+            <span className="block size-[132px] rounded-2xl bg-papier p-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`data:image/svg+xml;utf8,${encodeURIComponent(qrWallet)}`} alt="QR code de ta carte" className="size-full" />
+            </span>
+            <figcaption className="text-center text-sm leading-snug">Scanne avec ton téléphone pour l&apos;ajouter à ton Wallet</figcaption>
+          </figure>
         )}
       </div>
+      {carteParSms && (
+        <div className="mt-4 flex h-14 w-full items-center justify-center">
+          {sms.etat === "envoye" ? (
+            <p className="text-base font-semibold">SMS envoyé : ouvre le lien pour ajouter ta carte à ton Wallet.</p>
+          ) : sms.etat === "erreur" ? (
+            <p className="text-base font-semibold">{sms.message}</p>
+          ) : (
+            <button
+              type="button"
+              disabled={sms.etat === "envoi"}
+              onClick={async () => {
+                setSms({ etat: "envoi" });
+                const r = await envoyerCarte(membre.id);
+                setSms(r.ok ? { etat: "envoye" } : { etat: "erreur", message: r.message });
+              }}
+              className="flex h-14 items-center rounded-full border-2 border-trait px-7 text-base font-semibold active:bg-sable disabled:opacity-50"
+            >
+              {sms.etat === "envoi" ? "Envoi…" : "Recevoir ma carte Wallet par SMS"}
+            </button>
+          )}
+        </div>
+      )}
       <p className="mt-4 text-base text-marron-doux">Les points de cette commande seront ajoutés après le paiement.</p>
       <button
         type="button"

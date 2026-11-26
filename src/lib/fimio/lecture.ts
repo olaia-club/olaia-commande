@@ -17,6 +17,14 @@ export type MembreClub = {
 
 export type RecompenseClub = { id: string; nom: string; cout: number };
 
+/** Ce que FIMIO dit en plus de la carte : comment la mettre dans le Wallet. */
+export type CarteWallet = {
+  /** Adresse secrète de la carte, donnée seulement à sa création depuis la borne. */
+  url: string | null;
+  /** FIMIO peut envoyer le lien de la carte par SMS au numéro de la carte. */
+  parSms: boolean;
+};
+
 type Json = Record<string, unknown>;
 const objet = (v: unknown): Json => (v && typeof v === "object" && !Array.isArray(v) ? (v as Json) : {});
 const texte = (v: unknown) => (typeof v === "string" ? v.trim() : "");
@@ -45,6 +53,20 @@ export function lireMembre(brut: unknown): MembreClub | null {
     mode: cash !== null ? "cagnotte" : "points",
     solde: Math.max(0, cash ?? points),
   };
+}
+
+export function lireCarteWallet(brut: unknown): CarteWallet {
+  const b = objet(brut);
+  const url = texte(b.cardUrl);
+  return { url: /^https:\/\/[^\s]+\/carte\/[^\s/]+\/[a-f0-9]{32}$/i.test(url) ? url : null, parSms: b.cardBySms === true };
+}
+
+/** Valeur lue dans le QR d'une carte Wallet ou web : l'adresse de la carte, ou son numéro. */
+export function valeurScan(brut: string): string | null {
+  const v = brut.trim();
+  if (/\/carte\/[^\s/]+\/[a-f0-9]{32}(?:[/?#]|$)/i.test(v)) return v.slice(0, 300);
+  if (/^\d{4}[\s-]?\d{4}$/.test(v)) return v;
+  return null;
 }
 
 export function lireRecompenses(brut: unknown): RecompenseClub[] {

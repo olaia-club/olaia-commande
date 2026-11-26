@@ -1,6 +1,6 @@
 import "server-only";
 
-import { lireMembre, lireRecompenses, type MembreClub, type RecompenseClub } from "./lecture";
+import { lireCarteWallet, lireMembre, lireRecompenses, type CarteWallet, type MembreClub, type RecompenseClub } from "./lecture";
 
 /**
  * Le Club Olaía vit dans FIMIO, un logiciel à part : la borne ne garde aucune
@@ -41,6 +41,7 @@ async function appel(url: string, init: RequestInit = {}): Promise<unknown> {
 }
 
 type Adresses = { customerURL: string; loyaltyProgramsURL: string; orderURL: string };
+export type CarteTrouvee = { membre: MembreClub; wallet: CarteWallet };
 let adresses: Promise<Adresses> | null = null;
 
 /** Inscription auprès de FIMIO, une fois par instance du serveur. */
@@ -59,25 +60,44 @@ function lesAdresses(): Promise<Adresses> {
   return adresses;
 }
 
-/** La carte d'un client par son portable, ou null s'il n'est pas membre. */
-export async function trouverMembre(telephone: string): Promise<MembreClub | null> {
+const carte = (brut: unknown): CarteTrouvee | null => {
+  const membre = lireMembre(brut);
+  return membre ? { membre, wallet: lireCarteWallet(brut) } : null;
+};
+
+async function chercher(parametre: "phoneNumber" | "cardToken", valeur: string): Promise<CarteTrouvee | null> {
   const { customerURL } = await lesAdresses();
   try {
-    return lireMembre(await appel(`${customerURL}?phoneNumber=${encodeURIComponent(telephone)}`));
+    return carte(await appel(`${customerURL}?${parametre}=${encodeURIComponent(valeur)}`));
   } catch (e) {
     if (e instanceof ErreurClub && e.statut === 404) return null;
     throw e;
   }
 }
 
+/** La carte d'un client par son portable, ou null s'il n'est pas membre. */
+export const trouverMembre = (telephone: string) => chercher("phoneNumber", telephone);
+
+/** La carte d'un client par le QR de sa carte Wallet (ou web), ou son numéro. */
+export const trouverParCarte = (scan: string) => chercher("cardToken", scan);
+
 /** Crée la carte (bonus de bienvenue appliqué par FIMIO). */
-export async function creerMembre(telephone: string, prenom: string, optInSms: boolean): Promise<MembreClub> {
+export async function creerMembre(telephone: string, prenom: string, optInSms: boolean): Promise<CarteTrouvee> {
   const { customerURL } = await lesAdresses();
-  const membre = lireMembre(
+  const cree = carte(
     await appel(customerURL, { method: "POST", body: JSON.stringify({ phoneNumber: telephone, firstName: prenom, smsOptIn: optInSms }) }),
   );
-  if (!membre) throw new ErreurClub("FIMIO n'a pas renvoyé la carte créée.", 502);
-  return membre;
+  if (!cree) throw new ErreurClub("FIMIO n'a pas renvoyé la carte créée.", 502);
+  return cree;
+}
+
+/**
+ * FIMIO envoie le lien de la carte par SMS, au numéro enregistré sur la carte
+ * (jamais à un autre) : le client l'ouvre et ajoute la carte à son Wallet.
+ */
+export async function envoyerCarteParSms(membreId: string): Promise<void> {
+  const { customerURL } = await lesAdresses();
+  await appel(customerURL.replace(/\/customer$/, "/customerCard"), { method: "POST", body: JSON.stringify({ customerId: membreId }) });
 }
 
 /** Les récompenses du programme, de la moins chère à la plus chère. */

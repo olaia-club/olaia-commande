@@ -18,7 +18,7 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   title: "Olaía · Commande",
-  description: "Borne de commande et back-office du coffee shop Olaía, reliés à la caisse Zelty.",
+  description: "Logiciel de commande sur iPad et back-office du coffee shop Olaía, reliés à la caisse Zelty.",
 };
 
 export const viewport: Viewport = {
