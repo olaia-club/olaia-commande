@@ -21,13 +21,26 @@ export type LignePanier = {
 
 export type ModeCommande = "sur-place" | "a-emporter";
 
+/** Ce que l'écran de fin affiche, figé au moment où la commande part. */
+export type FinCommande = {
+  mode: ModeCommande;
+  total: number;
+  nbArticles: number;
+  membre: MembreClub | null;
+  /** Numéro donné par Zelty ; null tant que l'envoi à Zelty n'est pas branché. */
+  numero: string | null;
+  /** Aperçu de l'écran : la commande n'est ni envoyée ni encaissée. */
+  apercu: boolean;
+};
+
 /** Le membre du Club retrouvé dans FIMIO pour cette commande, s'il y en a un. */
-type Etat = { lignes: LignePanier[]; membre: MembreClub | null };
+type Etat = { lignes: LignePanier[]; membre: MembreClub | null; fin: FinCommande | null };
 
 type Action =
   | { type: "ajouter"; ligne: Omit<LignePanier, "cle" | "quantite">; quantite: number }
   | { type: "quantite"; cle: string; quantite: number }
   | { type: "membre"; membre: MembreClub | null }
+  | { type: "terminer"; fin: FinCommande }
   | { type: "vider" };
 
 export const cleLigne = (platId: string, choix: ChoixPanier[]) =>
@@ -57,7 +70,10 @@ function reducteur(etat: Etat, action: Action): Etat {
       return { ...etat, membre: action.membre };
     case "vider":
       // Client suivant : ni panier ni carte du Club.
-      return { lignes: [], membre: null };
+      return { lignes: [], membre: null, fin: null };
+    case "terminer":
+      // Le panier est vidé tout de suite : l'écran de fin garde seulement le résumé.
+      return { lignes: [], membre: null, fin: action.fin };
   }
 }
 
@@ -69,13 +85,15 @@ type Panier = {
   changerQuantite: (cle: string, quantite: number) => void;
   membre: MembreClub | null;
   choisirMembre: (membre: MembreClub | null) => void;
+  fin: FinCommande | null;
+  terminer: (fin: Omit<FinCommande, "total" | "nbArticles" | "membre">) => void;
   vider: () => void;
 };
 
 const PanierContexte = createContext<Panier | null>(null);
 
 export function PanierProvider({ children }: { children: ReactNode }) {
-  const [etat, envoyer] = useReducer(reducteur, { lignes: [], membre: null });
+  const [etat, envoyer] = useReducer(reducteur, { lignes: [], membre: null, fin: null });
   const valeur = useMemo<Panier>(
     () => ({
       lignes: etat.lignes,
@@ -85,6 +103,12 @@ export function PanierProvider({ children }: { children: ReactNode }) {
       changerQuantite: (cle, quantite) => envoyer({ type: "quantite", cle, quantite }),
       membre: etat.membre,
       choisirMembre: (membre) => envoyer({ type: "membre", membre }),
+      fin: etat.fin,
+      terminer: (fin) => {
+        const nbArticles = etat.lignes.reduce((n, l) => n + l.quantite, 0);
+        const total = somme(etat.lignes.map((l) => prixUnitaire(l) * l.quantite));
+        envoyer({ type: "terminer", fin: { ...fin, total, nbArticles, membre: etat.membre } });
+      },
       vider: () => envoyer({ type: "vider" }),
     }),
     [etat],

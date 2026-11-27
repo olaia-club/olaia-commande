@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { ClubBorne } from "@/components/borne/club-borne";
@@ -11,6 +12,7 @@ import { PhotoPlat } from "@/components/borne/photo-plat";
 
 export function PanierBorne({ clubConfigure }: { clubConfigure: boolean }) {
   const panier = usePanier();
+  const router = useRouter();
   const [mode, setMode] = useState<ModeCommande | null>(null);
 
   if (!panier.nbArticles) {
@@ -131,7 +133,17 @@ export function PanierBorne({ clubConfigure }: { clubConfigure: boolean }) {
             <p className="text-xl leading-relaxed text-marron-doux">
               L&apos;envoi à la caisse Zelty et le paiement sur le terminal seront branchés à l&apos;étape suivante. En attendant, rien n&apos;est encaissé{panier.membre ? " et aucun point n'est crédité" : ""}.
             </p>
-            <button type="button" onClick={() => setMode(null)} className="mt-2 flex h-16 items-center rounded-full border-2 border-trait px-8 text-lg font-semibold active:bg-sable">
+            <button
+              type="button"
+              onClick={() => {
+                panier.terminer({ mode, numero: null, apercu: true });
+                router.push("/borne/merci");
+              }}
+              className="mt-2 flex h-16 items-center rounded-full bg-marron px-8 text-lg font-semibold text-papier active:bg-marron-fonce"
+            >
+              Voir l&apos;écran de fin (aperçu)
+            </button>
+            <button type="button" onClick={() => setMode(null)} className="flex h-16 items-center rounded-full border-2 border-trait px-8 text-lg font-semibold active:bg-sable">
               Revenir à ma commande
             </button>
           </div>

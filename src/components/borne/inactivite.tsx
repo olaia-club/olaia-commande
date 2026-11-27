@@ -20,7 +20,8 @@ export function Inactivite() {
   const [restant, setRestant] = useState<number | null>(null);
   const dernierContact = useRef(0);
 
-  const surAccueil = chemin === "/borne";
+  // L'écran de fin a son propre retour à l'accueil.
+  const surAccueil = chemin === "/borne" || chemin === "/borne/merci";
 
   useEffect(() => {
     if (surAccueil) return;
