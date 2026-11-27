@@ -64,3 +64,7 @@ src/components/borne/ panier, fiche produit, carte, inactivité
 src/lib/zelty/        lecture de la carte Zelty (envoi des commandes à venir)
 src/lib/supabase/     clients Supabase (navigateur, serveur, admin)
 ```
+
+## L'appli client
+
+L'appli que les clients installent sur leur téléphone (App Store, Play Store) vit dans [`appli/`](appli/README.md) : carte du café, Club Olaía (connexion par SMS, points, récompenses) relié à FIMIO. Projet Expo à part, ignoré par le build Next.js.
