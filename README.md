@@ -43,6 +43,7 @@ Ce n'est pas une borne : c'est un logiciel en ligne (SaaS) qu'on ouvre sur l'iPa
 | Carte, fiche produit, commande en cours | `/borne/carte` | fait, lit Zelty |
 | Panier, sur place ou à emporter | `/borne/panier` | fait |
 | Club Olaía : numéro ou QR de la carte Wallet, inscription, points, carte Wallet (QR ou SMS) | `/borne/panier` | fait, lit FIMIO |
+| Écran de fin : merci, numéro de commande, Club, retour à l'accueil après 20 s | `/borne/merci` | fait (aperçu tant que l'envoi n'est pas branché) |
 | Envoi à la caisse Zelty et paiement au terminal | | à brancher |
 | Points crédités après paiement, récompenses sur l'iPad | | avec le paiement |
 | Mode express, back-office | | à venir |
