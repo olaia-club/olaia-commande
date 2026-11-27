@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Appli client (Expo) : son propre projet, ses propres règles.
+    "appli/**",
   ]),
 ]);
 
